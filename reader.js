@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // given a directory
 // process every file in the directory
 // store a line in mongo-- {raw, source_filename, metadata}
@@ -44,8 +45,8 @@ fc.on('dir', function(dir) { this.crawl(dir); });
 fc.on('file', function(file) {
   var self = this;
   // TODO this might hurt but makes coding so much easier
-  // TODO assumes ascii
-  fs.readFile(file, 'ascii', function(err, data) {
+  // TODO assumes utf
+  fs.readFile(file, 'utf8', function(err, data) {
     // TODO strings are probably not efficient and buffers may help. start naive.
     // TODO feed whole file to a tokenizer
     data.split('.').forEach(function(x) {
@@ -64,3 +65,5 @@ fc.on('line', function(file, line) {
     }, function(err, docs) { client.close() });
   });
 });
+
+fc.crawl('samples');
