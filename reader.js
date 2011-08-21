@@ -7,7 +7,9 @@
 // on directory
 
 var events = require('events');
+var fs = require('fs');
 var sys = require('sys');
+
 var mongodb = require('mongodb');
 
 var mongo_port = 27017;
@@ -21,49 +23,61 @@ function FileCrawler() {
 
 sys.inherits(FileCrawler, events.EventEmitter);
 
-FileCrawler.prototype.extend = function(obj) {
-  for (x in obj) { if (obj.hasOwnProperty(x)) this.prototype['x'] = obj[x] }
-};
-
-FileCrawler.extend({ 
-  crawl: function(path) {
-    var self = this;
-    fs.readdir(path, function(err, files) {
-      files.forEach(function(x) {
-        fs.stat(x, function(err, stats) {
-          if (stats.isFile() { self.emit('file', x); }
-          if (stats.isDirectory()) { self.emit('dir', x); }
-        });
+FileCrawler.prototype.crawl = function(path) {
+  var self = this;
+  fs.readdir(path, function(err, files) {
+    files.forEach(function(x) {
+      fs.stat(x, function(err, stats) {
+        if (err) console.log(err);
+        if (stats.isFile()) { self.emit('file', x); }
+        if (stats.isDirectory()) { self.emit('dir', x); }
       });
     });
-  }
-});
+  });
+};
 
-var fc = new FileCrawler();
-fc.on('dir', function(dir) { this.crawl(dir); });
+new mongodb.Db(mongo_db, mongos, {}).open(function(err, client) {
+  var lines_seen = 0;
+  var lines_done = 0;
+  var files_seen = 0;
+  var files_done = 0;
+  var fc = new FileCrawler();
+  fc.on('dir', function(dir) { this.crawl(dir); });
 
-fc.on('file', function(file) {
-  var self = this;
-  // TODO this might hurt but makes coding so much easier
-  // TODO assumes utf
-  fs.readFile(file, 'utf8', function(err, data) {
-    // TODO strings are probably not efficient and buffers may help. start naive.
-    // TODO feed whole file to a tokenizer
-    data.split('.').forEach(function(x) {
-      self.emit('line', file, x);
+  fc.on('file', function(file) {
+    files_seen++;
+    console.log('file ' + file);
+    var self = this;
+    // TODO this might hurt but makes coding so much easier
+    // TODO assumes utf
+    fs.readFile(file, 'utf8', function(err, data) {
+      // TODO strings are probably not efficient and buffers may help. start naive.
+      // TODO feed whole file to a tokenizer
+      data.split('.').forEach(function(x) {
+        lines_seen++;
+        self.emit('line', file, x);
+      });
+      files_done++;
+      if (files_seen == files_done) {
+        if (lines_seen == lines_done) {
+          client.close();
+        }
+      }
     });
   });
-});
 
-fc.on('line', function(file, line) {
-  new mongodb.Db(mongo_db, mongos, {}).open(function(err, client) {
+  fc.on('line', function(file, line) {
     var lines = new mongodb.Collection(client, 'lines');
     // TODO collect metadata
     lines.insert({
       'raw': line,
       'source': file
-    }, function(err, docs) { client.close() });
+    });
+    lines_done++;
   });
-});
 
-fc.crawl('samples');
+  // TODO fix this, make all relative
+  process.chdir('samples');
+
+  fc.crawl('.');
+});
