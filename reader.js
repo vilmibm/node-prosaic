@@ -48,11 +48,7 @@ function FileCrawler() {
   this.on('file', function(file) {
     var self = this;
     self.files_seen++;
-    // TODO this might hurt but makes coding so much easier
-    // TODO assumes utf
     fs.readFile(file, 'utf8', function(err, data) {
-      // TODO strings are probably not efficient and buffers may help. start naive.
-      // TODO feed whole file to a tokenizer
       var t = new Tokenizer();
       t.on('phrase', function(match) {
         self.phrases_seen++;
