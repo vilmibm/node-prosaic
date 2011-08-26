@@ -7,13 +7,37 @@ var events = require('events');
 var fs = require('fs');
 var sys = require('sys');
 
-var cmudict = require('cmudict');
+var CMUDict = require('cmudict').CMUDict;
 var mongodb = require('mongodb');
 
 var mongo_port = 27017;
 var mongo_db = 'noetry_dev';
 var mongo_server = '127.0.0.1';
 var mongos = new mongodb.Server(mongo_server, mongo_port, {});
+
+var cmudict = new CMUDict();
+
+function Phrase(string) {
+  this.raw = string;
+  this.num_sylls = 0;
+  this.phonemes = [];
+  // trim off leading and trailing non letter/number anything
+  function trim(string) {
+    return string.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
+  }
+  var words = string.split(/ +/);
+  var vowelre = /AA|AE|AH|AO|AW|AY|IH|IY|OW|OY|UH|UW/;
+  words.forEach(function(x) {
+    var phonemic = cmudict.get(trim(x));
+    if (phonemic) {
+      var phonemes = phonemic.split(' ');
+      this.phonemes.push(phonemes);
+      phonemes.each(function(p) {
+        if (p.match(vowelre)) { this.num_sylls++; }
+      });
+    }
+  });
+}
 
 function Tokenizer() {
   this._buffer = '';
@@ -53,6 +77,7 @@ function FileCrawler() {
     fs.readFile(file, 'utf8', function(err, data) {
       var t = new Tokenizer();
       t.on('phrase', function(match) {
+        var p = new Phrase(match);
         self.phrases_seen++;
         var phrases = new mongodb.Collection(self.client, 'phrases');
         var words = match.split(' ');
