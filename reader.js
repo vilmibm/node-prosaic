@@ -17,10 +17,11 @@ var mongos = new mongodb.Server(mongo_server, mongo_port, {});
 
 var cmudict = new CMUDict();
 
-function Phrase(string) {
+function Phrase(string, file) {
   this.raw = string;
   this.num_sylls = 0;
-  this.phonemes = [];
+  this.source = file;
+  var phonemes = [];
   // trim off leading and trailing non letter/number anything
   function trim(string) {
     return string.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
@@ -30,13 +31,14 @@ function Phrase(string) {
   words.forEach(function(x) {
     var phonemic = cmudict.get(trim(x));
     if (phonemic) {
-      var phonemes = phonemic.split(' ');
-      this.phonemes.push(phonemes);
-      phonemes.each(function(p) {
+      var word_phonemes = phonemic.split(' ');
+      phonemes.push(phonemes);
+      word_phonemes.forEach(function(p) {
         if (p.match(vowelre)) { this.num_sylls++; }
       });
     }
   });
+  this.phonemes = phonemes;
 }
 
 function Tokenizer() {
@@ -68,7 +70,7 @@ function FileCrawler() {
   this.phrases_done = 0;
   this.files_seen = 0;
   this.files_done = 0;
-  this.cmudict = new cmudict.CMUDict();
+  this.cmudict = new CMUDict();
   this.on('dir', function(dir) { this.crawl(dir); });
 
   this.on('file', function(file) {
@@ -77,41 +79,41 @@ function FileCrawler() {
     fs.readFile(file, 'utf8', function(err, data) {
       var t = new Tokenizer();
       t.on('phrase', function(match) {
-        var p = new Phrase(match);
+        var p = new Phrase(match, file);
         self.phrases_seen++;
         var phrases = new mongodb.Collection(self.client, 'phrases');
-        var words = match.split(' ');
-        var num_sylls = 0;
-        var vowel_sounds = [
-          'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'
-        ];
-        function is_in(needle, haystack) {
-          haystack.forEach(function(x) {
-            if (x === needle) { return true; }
-            return false;
-          });
-        }
-        var sentence_phonemes = [];
-        words.forEach(function(w) {
-          // TODO this mostly worksish but needs a sanitized version of the
-          // string to work on. also syllable counting is borked.
-          var phoneme_str = self.cmudict.get(w);
-          if (phoneme_str) {
-            var word_phonemes = phoneme_str.split(' ');
-            sentence_phonemes.push(word_phonemes);
-            word_phonemes.forEach(function(p) {
-              if (is_in(p.substring(0,2), vowel_sounds)) { num_sylls++; }
-            });
-          } else {
-            // TODO fallback syllable counter
-          }
-        });
-        words[words.length-1]
+        //var words = match.split(' ');
+        //var num_sylls = 0;
+        //var vowel_sounds = [
+        //  'AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW'
+        //];
+        //function is_in(needle, haystack) {
+        //  haystack.forEach(function(x) {
+        //    if (x === needle) { return true; }
+        //    return false;
+        //  });
+        //}
+        //var sentence_phonemes = [];
+        //words.forEach(function(w) {
+        //  // TODO this mostly worksish but needs a sanitized version of the
+        //  // string to work on. also syllable counting is borked.
+        //  var phoneme_str = self.cmudict.get(w);
+        //  if (phoneme_str) {
+        //    var word_phonemes = phoneme_str.split(' ');
+        //    sentence_phonemes.push(word_phonemes);
+        //    word_phonemes.forEach(function(p) {
+        //      if (is_in(p.substring(0,2), vowel_sounds)) { num_sylls++; }
+        //    });
+        //  } else {
+        //    // TODO fallback syllable counter
+        //  }
+        //});
+        //words[words.length-1]
         phrases.insert({
-          'raw': match,
-          'phonemes': sentence_phonemes,
-          'syllables': num_sylls,
-          'source': file,
+          'raw': p.raw,
+          'phonemes': p.phonemes,
+          'syllables': p.num_sylls,
+          'source': p.source,
         }, function() {
           self.phrases_done++;
           if (self.done()) {
@@ -119,6 +121,7 @@ function FileCrawler() {
           }
         });
       });
+
       t.on('end', function() {
         self.files_done++;
         if (self.done()) {
