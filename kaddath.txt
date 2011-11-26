@@ -15,6 +15,6 @@ nyarlarthotep
 * spec a target db
 
 cthulhu
-* accept poem structure and db name (default to huge bog db)
+* accept poem structure and db name (default to huge stijfveen db)
 * read from mongodb
 * output poem in text
