@@ -18,6 +18,8 @@ var mongos = new mongodb.Server(mongo_server, mongo_port, {});
 var cmudict = new CMUDict();
 
 function Phrase(string, file) {
+  console.log('creating Phrase for '+string);
+  console.log(file);
   this.raw = string;
   this.num_sylls = 0;
   this.source = file;
@@ -109,14 +111,18 @@ function FileCrawler() {
         //  }
         //});
         //words[words.length-1]
+        console.log('trying to insert '+p.raw);
+        phrases.insert({a:1},function() { console.log('dum'); });
         phrases.insert({
           'raw': p.raw,
-          'phonemes': p.phonemes,
+          'phonemes': p.phonemes.join(' '),
           'syllables': p.num_sylls,
-          'source': p.source,
+          'source': p.source
         }, function() {
+          console.log('inserted something');
           self.phrases_done++;
           if (self.done()) {
+            console.log('checking done');
             self.client.close();
           }
         });
@@ -139,6 +145,7 @@ FileCrawler.prototype.crawl = function(path) {
   var self = this;
   fs.readdir(path, function(err, files) {
     files.forEach(function(x) {
+      console.log('checking file '+x);
       fs.stat(x, function(err, stats) {
         if (err) console.log(err);
         if (stats.isFile()) { self.emit('file', x); }
