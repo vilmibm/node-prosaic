@@ -4,6 +4,7 @@
 // * run through tokenizer/phraser and into mongodb
 
 var net = require('net');
+var EventEmitter = require('events').EventEmitter;
 
 var server = net.createServer(function(c) {
     c.on('data', function(data) {
@@ -29,6 +30,7 @@ function consume(json) {
 var prosaic_parser = {
     parse: function(text_obj) {
         var doc = this.doc(text_obj.label, text_obj.db);
+        var text = doc.raw;
     },
     doc: function(label, db) {
         return {
@@ -36,4 +38,12 @@ var prosaic_parser = {
             db: (db || 'stijfveen')
         };
     }
+};
+
+var prosaic_tokenizer = {
+    init: function() {
+       this._buffer = '';
+       events.EventEmitter.call(this);
+    }
+    //, ...
 };
