@@ -5,6 +5,8 @@
 
 var net = require('net');
 var EventEmitter = require('events').EventEmitter;
+var CMUDict = require('cmudict').CMUDict;
+var cmudict = new CMUDict();
 
 var server = net.createServer(function(c) {
     c.on('data', function(data) {
@@ -29,14 +31,28 @@ function consume(json) {
 
 var prosaic_parser = {
     parse: function(text_obj) {
-        var doc = this.doc(text_obj.label, text_obj.db);
-        var text = doc.raw;
-    },
-    doc: function(label, db) {
-        return {
-            label: label,
+        this.doc = {
+            label: text_obj.label,
             db: (db || 'stijfveen')
         };
+        var t = Object.create(prosaic_tokenizer).init();
+        var that = this;
+        t.on('phrase', function(str) { this.handle_phrase.call(that, str) });
+        // TODO init a mongo client
+        // TODO use .end() to clean up mongo client
+        t.write(text_obj.raw);
+    },
+    handle_phrase: function(str) {
+        var phrase_doc = {
+            raw: str,
+            source: label,
+            // TODO num_sylls,
+            // TODO source
+            // TODO phoneme str
+            // TODO end rhyme
+        };
+        // TODO connect to this.doc.db
+        // TODO insert phrase_doc
     }
 };
 
@@ -44,6 +60,22 @@ var prosaic_tokenizer = {
     init: function() {
        this._buffer = '';
        events.EventEmitter.call(this);
+       return this;
+    },
+    write: function(data) {
+        for (var c in data) {
+            if (data[c] === "\n" || data[c] === "\r") {
+                this._buffer += ' ';
+            }
+            else if (data[c].match(/[.,;:]/)) {
+                this._buffer += data[c];
+                this.emit('phrase', this._buffer);
+                this._buffer = '';
+            }
+            else {
+                this._buffer += data[c];
+            }
+        }
+        this.emit('end');
     }
-    //, ...
 };
