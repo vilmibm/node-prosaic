@@ -9,7 +9,7 @@ azathoth
 * accept json data terminated by PROSAICFHTAGN
 * run through tokenizer/phraser and into mongodb
 
-nyarlarthotep
+nyarlathotep
 * point at file or directory
 * (recursively) read and send each file in a json obj off to azathoth
 * spec a target db
