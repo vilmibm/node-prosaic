@@ -15,44 +15,63 @@ var mongo_port = 27017;
 var mongo_server = '127.0.0.1';
 var mongos = new mongodb.Server(mongo_server, mongo_port, {});
 
-var to_array = function to_array(thing) {
-    return Array.prototype.slice.call(thing);
-};
+// TODO put this in a util
+function to_array(thing) { return Array.prototype.slice.call(thing); }
+function implement_map(props, from, to) {
+    props.forEach(function(p) {
+        var func = function() {
+            from[p].apply(from, to_array(arguments));
+        };
+        func.name = p;
+        to[p] = func;
+    });
+}
 
 var server = net.createServer(function(c) {
     c.on('data', function(data) {
         var text_json = data.toString().match(/(.*)PROSAICFTHGAN/);
         if (!text_json) return;
-        consume(text_json[1]);
+        consume(text_json[1], c);
     });
 });
 server.listen(9143, 'localhost');
 
-function consume(json) {
+function consume(json, connection) {
     var text = '';
     try { text = JSON.parse(json); }
     catch (e) {
-        console.error('Received malformed json');
+        var msg = 'ERROR: malformed json';
+        console.error(msg);
+        connection.write(msg);
         return;
     }
     var do_want = ['label', 'raw'];
-    var failed = false;
+    var missing = [];
     do_want.forEach(function(x) {
         if (!text[x]) {
-            console.error('Received malformed json; missing key '+x);
-            failed = true;
+            missing.push(x);
         }
     });
-    if (failed) return;
-    var p = Object.create(prosaic_parser).init();
+    if (missing.length > 0) {
+        var msg = 'ERROR: missing keys: '+missing.join(', ');
+        console.error(msg);
+        connection.write(msg);
+        return;
+    }
+    var p = Object.create(prosaic_parser).init(connection);
     p.parse(text);
 }
 
 var prosaic_parser = {
-    init: function() {
+    init: function(connection) {
+        this.connection = connection;
         this.phrases_in = 0;
         this.phrases_out = 0;
         return this;
+    },
+    error: function(msg) {
+        console.error(msg);
+        this.connection.write('ERROR: '+msg);
     },
     parse: function(text_obj) {
         this.doc = {
@@ -62,7 +81,7 @@ var prosaic_parser = {
         var that = this;
         new mongodb.Db(this.doc.db, mongos, {}).open(function(err, client) {
             if (err) {
-                console.error(err);
+                this.error(err);
                 return;
             }
             that.client = client;
@@ -85,28 +104,19 @@ var prosaic_parser = {
         var that = this;
         phrases.insert(phrase_doc, {safe:true}, function(err,docs) {
             if (err) {
-                console.error(err);
+                that.error(err);
                 that.client.close()
                 return;
             }
             that.phrases_out++;
             sys.print(that.phrases_in+'/'+that.phrases_out, '\r');
             if (that.phrases_out === that.phrases_in) {
+                that.connection.write('OK\r\n');
                 that.client.close();
             }
         });
     }
 };
-
-function implement_map(props, from, to) {
-    props.forEach(function(p) {
-        var func = function() {
-            from[p].apply(from, to_array(arguments));
-        };
-        func.name = p;
-        to[p] = func;
-    });
-}
 
 var prosaic_tokenizer = {
     init: function() {
