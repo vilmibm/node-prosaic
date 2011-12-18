@@ -5,6 +5,7 @@
 
 var net = require('net');
 var EventEmitter = require('events').EventEmitter;
+var sys = require('sys');
 
 var CMUDict = require('cmudict').CMUDict;
 var mongodb = require('mongodb');
@@ -89,6 +90,7 @@ var prosaic_parser = {
                 return;
             }
             that.phrases_out++;
+            sys.print(that.phrases_in+'/'+that.phrases_out, '\r');
             if (that.phrases_out === that.phrases_in) {
                 that.client.close();
             }
