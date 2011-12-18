@@ -10,9 +10,8 @@ azathoth
 * run through tokenizer/phraser and into mongodb
 
 nyarlathotep
-* point at file or directory
-* (recursively) read and send each file in a json obj off to azathoth
-* spec a target db
+* point at file, target db, azathoth (host and port)
+* read and send file in a json obj off to azathoth
 
 cthulhu
 * accept poem structure and db name (default to huge stijfveen db)
