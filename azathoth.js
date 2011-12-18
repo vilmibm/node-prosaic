@@ -82,7 +82,12 @@ var prosaic_parser = {
         };
         var phrases = new mongodb.Collection(this.client, 'phrases');
         var that = this;
-        phrases.insert(phrase_doc, function() {
+        phrases.insert(phrase_doc, {safe:true}, function(err,docs) {
+            if (err) {
+                console.error(err);
+                that.client.close()
+                return;
+            }
             that.phrases_out++;
             if (that.phrases_out === that.phrases_in) {
                 that.client.close();
