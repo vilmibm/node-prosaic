@@ -5,10 +5,11 @@
 var fs = require('fs');
 var net = require('net');
 
+// TODO spec these
 var azathoth_port = 9143;
 var azathoth_host = 'localhost';
-var filepath = process.argv[1];
-var db = process.argv[2] || 'stijfveen';
+var filepath = process.argv[2];
+var db = process.argv[3] || 'stijfveen';
 
 if (!filepath) {
     console.error('no filepath supplied');
@@ -26,7 +27,8 @@ fs.readFile(filepath, 'utf8', function(err, data) {
        db: db
     };
     var msg_json = JSON.stringify(message);
-    var client = net.connect(azathoth_port, azathoth_host, function() {
+    var client = net.createConnection(azathoth_port, azathoth_host);
+    client.on('connect', function() {
         client.write(msg_json+'PROSAICFTHGAN\r\n');
     });
     client.on('data', function(data) {
@@ -39,4 +41,4 @@ fs.readFile(filepath, 'utf8', function(err, data) {
             process.exit(3);
         }
     });
-};
+});
