@@ -29,9 +29,12 @@ fs.readFile(filepath, 'utf8', function(err, data) {
     var msg_json = JSON.stringify(message);
     var client = net.createConnection(azathoth_port, azathoth_host);
     client.on('connect', function() {
-        client.write(msg_json+'PROSAICFTHGAN\r\n');
+        console.log('hi');
+        client.write(msg_json+'PROSAICFHTAGN\r\n');
+        console.log('ohnoes');
     });
     client.on('data', function(data) {
+        console.log('there');
         data = data.toString();
         if (data.match(/^OK/)) {
             process.exit(0);

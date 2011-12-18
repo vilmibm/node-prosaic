@@ -27,12 +27,18 @@ function implement_map(props, from, to) {
     });
 }
 
+// TODO BUG handle chunking, knucklehead
+// collect data into buffer until PROSAICFHTAGN is spotted.
 var server = net.createServer(function(c) {
+    console.log('client connected');
     c.on('data', function(data) {
-        var text_json = data.toString().match(/(.*)PROSAICFTHGAN/);
+        console.log('client sent data');
+        console.log(data.length);
+        var text_json = data.toString().match(/(.*)PROSAICFHTAGN/);
         if (!text_json) return;
         consume(text_json[1], c);
     });
+    c.on('disconnect', function() { console.log('client disconnected'); });
 });
 server.listen(9143, 'localhost');
 
@@ -112,6 +118,7 @@ var prosaic_parser = {
             sys.print(that.phrases_in+'/'+that.phrases_out, '\r');
             if (that.phrases_out === that.phrases_in) {
                 that.connection.write('OK\r\n');
+                that.connection.close();
                 that.client.close();
             }
         });
@@ -127,6 +134,7 @@ var prosaic_tokenizer = {
         return this;
     },
     write: function(data) {
+        // TODO abbreviation list
         for (var c in data) {
             if (data[c] === "\n" || data[c] === "\r") {
                 this._buffer += ' ';
