@@ -25,24 +25,31 @@ function consume(json) {
             console.error('Received malformed json; missing key '+x);
         }
     });
-    var p = Object.create(prosaic_parser);
+    var p = Object.create(prosaic_parser).init();
     p.parse(text);
 }
 
 var prosaic_parser = {
+    init: function() {
+        this.phrases_in = 0;
+        this.phrases_out = 0;
+        return this;
+    },
     parse: function(text_obj) {
         this.doc = {
             label: text_obj.label,
-            db: (db || 'stijfveen')
+            db: (text_obj.db || 'stijfveen')
         };
-        var t = Object.create(prosaic_tokenizer).init();
-        var that = this;
-        t.on('phrase', function(str) { this.handle_phrase.call(that, str) });
-        // TODO init a mongo client
-        // TODO use .end() to clean up mongo client
-        t.write(text_obj.raw);
+        new mongodb.Db(this.doc.db, mongos, {}).open(function(err, client) {
+            this.client = client;
+            var t = Object.create(prosaic_tokenizer).init();
+            var that = this;
+            t.on('phrase', function(str) { this.handle_phrase.call(that, str) });
+            t.write(text_obj.raw);
+        });
     },
     handle_phrase: function(str) {
+        this.phrases_in++;
         var phrase_doc = {
             raw: str,
             source: label,
@@ -51,6 +58,14 @@ var prosaic_parser = {
             // TODO phoneme str
             // TODO end rhyme
         };
+        var phrases = new mongodb.Collection(self.client, 'phrases');
+        var that = this;
+        phrases.insert(phrase_doc, function() {
+            that.phrases_out++;
+            if (that.phrases_out === that.phrases_in) {
+                that.client.close();
+            }
+        });
         // TODO connect to this.doc.db
         // TODO insert phrase_doc
     }
