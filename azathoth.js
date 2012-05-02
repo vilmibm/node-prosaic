@@ -31,12 +31,13 @@ function implement_map(props, from, to) {
 // collect data into buffer until PROSAICFHTAGN is spotted.
 var server = net.createServer(function(c) {
     console.log('client connected');
+    var buffer = '';
     c.on('data', function(data) {
         console.log('client sent data');
         console.log(data.length);
-        var text_json = data.toString().match(/(.*)PROSAICFHTAGN/);
-        if (!text_json) return;
-        consume(text_json[1], c);
+        buffer += data.toString();
+        var match = buffer.match(/(.*)PROSAICFHTAGN/)
+        if (match) consume(match[1], c)
     });
     c.on('disconnect', function() { console.log('client disconnected'); });
 });

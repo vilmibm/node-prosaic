@@ -10,6 +10,7 @@ var azathoth_port = 9143;
 var azathoth_host = 'localhost';
 var filepath = process.argv[2];
 var db = process.argv[3] || 'stijfveen';
+var dry_run = process.argv[4] || false
 
 if (!filepath) {
     console.error('no filepath supplied');
@@ -27,11 +28,15 @@ fs.readFile(filepath, 'utf8', function(err, data) {
        db: db
     };
     var msg_json = JSON.stringify(message);
+    if (dry_run) {
+        console.log(msg_text);
+        return;
+    }
     var client = net.createConnection(azathoth_port, azathoth_host);
     client.on('connect', function() {
-        console.log('hi');
+        console.log('server connected');
         client.write(msg_json+'PROSAICFHTAGN\r\n');
-        console.log('ohnoes');
+        console.log('text sent');
     });
     client.on('data', function(data) {
         console.log('there');
