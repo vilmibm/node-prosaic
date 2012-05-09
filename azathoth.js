@@ -5,7 +5,6 @@
 
 var net = require('net');
 var EventEmitter = require('events').EventEmitter;
-var sys = require('sys');
 
 var CMUDict = require('cmudict').CMUDict;
 var mongodb = require('mongodb');
@@ -36,8 +35,11 @@ var server = net.createServer(function(c) {
         console.log('client sent data');
         console.log(data.length);
         buffer += data.toString();
-        var match = buffer.match(/(.*)PROSAICFHTAGN/)
-        if (match) consume(match[1], c)
+        var match = buffer.match(/(.*)PROSAICFHTAGN/);
+        if (match) {
+            consume(match[1], c);
+            buffer = '';
+        }
     });
     c.on('disconnect', function() { console.log('client disconnected'); });
 });
@@ -116,7 +118,7 @@ var prosaic_parser = {
                 return;
             }
             that.phrases_out++;
-            sys.print(that.phrases_in+'/'+that.phrases_out, '\r');
+            process.stdout.write(that.phrases_in+'/'+that.phrases_out, '\r');
             if (that.phrases_out === that.phrases_in) {
                 that.connection.write('OK\r\n');
                 that.connection.close();

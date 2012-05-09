@@ -29,7 +29,7 @@ fs.readFile(filepath, 'utf8', function(err, data) {
     };
     var msg_json = JSON.stringify(message);
     if (dry_run) {
-        console.log(msg_text);
+        console.log(msg_json);
         return;
     }
     var client = net.createConnection(azathoth_port, azathoth_host);
