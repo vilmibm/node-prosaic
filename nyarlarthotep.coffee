@@ -4,29 +4,41 @@
 fs = require 'fs'
 
 async = require 'async'
+{CMUDict} = require 'cmudict'
 mg = require 'mongoose'
 natural = require 'natural'
 
+(require './prelude').install()
+
 filename = process.argv[2] or throw 'need filename'
 dbname = process.argv[3] or 'prosaic'
+vowel_re = /AA|AE|AH|AO|AW|AY|EH|EY|ER|IH|IY|OW|OY|UH|UW/
 split_pattern = /[\.,!?;]/
 phrase_toker = new natural.RegexpTokenizer(pattern:split_pattern)
 word_toker = new natural.WordTokenizer()
 metaphone = natural.Metaphone
 metaphone.attach()
+cmudict = new CMUDict()
 
-# helpers
-head = (l) -> l[0]
-tail = (l) -> l[1..]
-len = (l) -> l.length
-last = (l) -> if (len l) <= 1 then l.pop() else last (tail l)
-gt = (x) -> (y) -> x > y
+# type Phoneme = String
+# type Word = String
+# Word -> [Phoneme]
+phonemes = (w) ->
+    ph_string = cmudict.get(w)
+    if ph_string then ph_string.split ' ' else throw 'word not found'
+
+# Word -> Num
+count_syllables = (w) ->
+    if w then (len ((filter (match vowel_re)) (phonemes w))) else 0
 
 PhraseSchema = new mg.Schema(
     raw: {type:String, require:true}
     source: {type:String, require:true}
+    stripped: String
     line_no: Number
     last_sound: String
+    rhyme_sound: String
+    num_syllables: Number
 )
 Phrase = mg.model('Phrase', PhraseSchema)
 mg.connect("mongodb://localhost/#{dbname}")
@@ -44,9 +56,12 @@ fs.readFile(filename, (err, data) ->
             words = word_toker.tokenize(s)
             phrase = new Phrase()
             phrase.raw = s
+            phrase.stripped = (join ' ') words
             phrase.source = filename
             phrase.line_no = line_no
             phrase.last_sound = (last words).phonetics()
+            phrase.num_syllables = sum ((map (maybe_num count_syllables)) words)
+            phrase.rhyme_sound = ((join ' ') ((take_last 3) ((maybe_list phonemes) (last words))))
             phrase.save(cb)
         , (err) ->
             console.error err if err
