@@ -54,14 +54,15 @@ fs.readFile(filename, (err, data) ->
             line_no += 1
             s = s.replace(/[\r\n]+/g, ' ')
             words = word_toker.tokenize(s)
-            phrase = new Phrase()
-            phrase.raw = s
-            phrase.stripped = (join ' ') words
-            phrase.source = filename
-            phrase.line_no = line_no
-            phrase.last_sound = (last words).phonetics()
-            phrase.num_syllables = sum ((map (maybe_num count_syllables)) words)
-            phrase.rhyme_sound = ((join ' ') ((take_last 3) ((maybe_list phonemes) (last words))))
+            phrase = new Phrase(
+                raw: s
+                stripped: (join ' ') words
+                source: filename
+                line_no: line_no
+                last_sound: (last words).phonetics()
+                num_syllables: sum ((map (maybe_num count_syllables)) words)
+                rhyme_sound: ((join ' ') ((take_last 3) ((maybe_list phonemes) (last words))))
+            )
             phrase.save(cb)
         , (err) ->
             console.error err if err
