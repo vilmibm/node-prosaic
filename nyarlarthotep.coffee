@@ -9,6 +9,7 @@ mg = require 'mongoose'
 natural = require 'natural'
 
 (require './prelude').install()
+{Phrase} = require './idols'
 
 filename = process.argv[2] or throw 'need filename'
 dbname = process.argv[3] or 'prosaic'
@@ -31,16 +32,6 @@ phonemes = (w) ->
 count_syllables = (w) ->
     if w then (len ((filter (match vowel_re)) (phonemes w))) else 0
 
-PhraseSchema = new mg.Schema(
-    raw: {type:String, require:true}
-    source: {type:String, require:true}
-    stripped: String
-    line_no: Number
-    last_sound: String
-    rhyme_sound: String
-    num_syllables: Number
-)
-Phrase = mg.model('Phrase', PhraseSchema)
 mg.connect("mongodb://localhost/#{dbname}")
 
 fs.readFile(filename, (err, data) ->
