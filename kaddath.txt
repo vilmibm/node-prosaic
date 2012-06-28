@@ -1,19 +1,8 @@
-json struct for file:
-path, raw text, db
-
-for phrase:
-filepath, raw phrase, num syllables, phoneme list,
-
-azathoth
-* listen at some port
-* accept json data terminated by PROSAICFHTAGN
-* run through tokenizer/phraser and into mongodb
-
 nyarlathotep
-* point at file, target db, azathoth (host and port)
-* read and send file in a json obj off to azathoth
+* accept filename (required), dbname (optional)
+* read, tokenize, save in mongo
 
 cthulhu
-* accept poem structure and db name (default to huge stijfveen db)
+* accept poem structure and dbname
 * read from mongodb
 * output poem in text
