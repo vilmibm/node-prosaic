@@ -1,5 +1,5 @@
 #!/usr/bin/env coffee
-# hastur.coffee
+# nyarlarthotep.coffee
 # read named file, put in database
 fs = require 'fs'
 
