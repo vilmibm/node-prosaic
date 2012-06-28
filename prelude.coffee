@@ -23,7 +23,7 @@ filter = (p) -> (l) -> l.filter p
 map = (f) -> (l) -> l.map f
 
 # Regexp -> String -> Bool
-match = (r) -> (s) -> s.match r != null
+match = (r) -> (s) -> (s.match r) != null
 
 # a -> null
 print = (a...) -> console.log.apply null, a
