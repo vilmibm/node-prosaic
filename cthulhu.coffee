@@ -13,12 +13,18 @@ mg = require 'mongoose'
 
 class Rule
     @trivial_clause: {}
+    @collapse_ruleset: ->
+        # TODO
+    @weaken_ruleset: ->
+        # TODO
     @line_to_rule: (line) ->
-        # TODO support multiple rules per line
+        ruleset = []
         if 'num_syllables' of line
-            new SyllableCountRule(line.num_syllables)
-        else
-            new Rule
+            (front ruleset) new SyllableCountRule(line.num_syllables)
+        # TODO more rules...
+        if (eq (len ruleset)) 0
+            (front ruleset) new Rule
+        ruleset
     constructor: ->
         @.weakness = 0
         @.clauses =
@@ -55,14 +61,19 @@ fs.readFile(template_filename, (err, data) ->
     (process.exit 2) if err
 
     lines = JSON.parse(data.toString()).lines
-    rules = (map Rule.line_to_rule) lines
+    rulesets = (map Rule.line_to_rule) lines
 
-    async.map(rules, (rule, cb) ->
+    async.map(rulesets, (ruleset, cb) ->
         # TODO random attribute siliness
-        Phrase.findOne(rule.clause(), (e, phrase) ->
-            (print e) if e
-            cb null, phrase.stripped
-        )
+        # TODO collapse ruleset into single query
+        find_line = (ruleset) -> (cb) ->
+            Phrase.findOne((Rule.collapse_ruleset ruleset), (e, phrase) ->
+                if phrase
+                    cb null, phrase
+                else
+                    (find_line (Rule.weaken_ruleset ruleset)) cb
+            )
+        (find_line ruleset) cb
     , (e, poem) ->
         (console.error e) if e
         print poem
