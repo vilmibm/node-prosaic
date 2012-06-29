@@ -11,7 +11,6 @@ mg = require 'mongoose'
 (require './prelude').install()
 {Phrase} = require './idols'
 
-
 randi = (max) -> Math.floor (Math.random() * max)
 
 # type RuleSet = [Rule]
