@@ -14,6 +14,7 @@ mg = require 'mongoose'
 class Rule
     @trivial_clause: {}
     @line_to_rule: (line) ->
+        # TODO support multiple rules per line
         if 'num_syllables' of line
             new SyllableCountRule(line.num_syllables)
         else
@@ -47,7 +48,7 @@ class SyllableCountRule extends Rule
 template_filename = process.argv[2] or process.exit(1)
 dbname = process.argv[3] or 'prosaic'
 
-mg.connect("mongodb://#{dbname}")
+mg.connect("mongodb://localhost/#{dbname}")
 
 fs.readFile(template_filename, (err, data) ->
     (print err) if err
@@ -57,8 +58,14 @@ fs.readFile(template_filename, (err, data) ->
     rules = (map Rule.line_to_rule) lines
 
     async.map(rules, (rule, cb) ->
-        cb null, 'GREAT JOB'
+        # TODO random attribute siliness
+        Phrase.findOne(rule.clause(), (e, phrase) ->
+            (print e) if e
+            cb null, phrase.stripped
+        )
     , (e, poem) ->
+        (console.error e) if e
         print poem
+        process.exit()
     )
 )
