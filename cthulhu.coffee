@@ -5,13 +5,19 @@
 
 fs = require 'fs'
 
+async = require 'async'
 mg = require 'mongoose'
 
 (require './prelude').install()
 {Phrase} = require './idols'
 
 class Rule
-    trivial_clause: {}
+    @trivial_clause: {}
+    @line_to_rule: (line) ->
+        if 'num_syllables' of line
+            new SyllableCountRule(line.num_syllables)
+        else
+            new Rule
     constructor: ->
         @.weakness = 0
         @.clauses =
@@ -36,7 +42,7 @@ class SyllableCountRule extends Rule
                 c[l] = (fac s) l
                 ((gen_clauses c) s) (l-1)
         @.clauses = ((gen_clauses {}) syllables) syllables
-        @.clases[0] = @.trivial_clause
+        @.clauses[0] = Rule.trivial_clause
 
 template_filename = process.argv[2] or process.exit(1)
 dbname = process.argv[3] or 'prosaic'
@@ -46,6 +52,13 @@ mg.connect("mongodb://#{dbname}")
 fs.readFile(template_filename, (err, data) ->
     (print err) if err
     (process.exit 2) if err
-    template = JSON.parse(data.toString())
-    print template
+
+    lines = JSON.parse(data.toString()).lines
+    rules = (map Rule.line_to_rule) lines
+
+    async.map(rules, (rule, cb) ->
+        cb null, 'GREAT JOB'
+    , (e, poem) ->
+        print poem
+    )
 )
