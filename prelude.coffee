@@ -1,3 +1,5 @@
+_ = require 'underscore'
+
 # (a -> b) -> (c -> a) -> (c -> b)
 c = (f) -> (g) -> (a...) -> (f g.apply(null, a))
 
@@ -16,6 +18,9 @@ take_last = (n) -> (l) -> l[-n..]
 # (Ord a,b) => a -> b -> Bool
 gt = (x) -> (y) -> x > y
 
+# (Ord a,b) => a -> b -> Bool
+lt = (x) -> (y) -> x < y
+
 # (a -> Bool) -> [a] -> [a]
 filter = (p) -> (l) -> l.filter p
 
@@ -30,16 +35,20 @@ print = (a...) -> console.log.apply null, a
 
 # TODO type specific hack here
 # (a -> a -> a) -> [a] -> a
-fold = (f) -> (l) -> if (len l) then l.reduce f else 0
+fold = (i) -> (f) -> (l) -> if (len l) then (l.reduce f,i) else i
 
 # [a] -> a
-sum = fold (x,y) -> x+y
+sum = (fold 0) (x,y) -> x+y
 
 # a -> a -> Bool
 eq = (x) -> (y) -> x == y
 
 # a -> a -> Bool
 ne = (x) -> (y) -> x != y
+
+# (Num a) => a -> a
+
+decr = (x) -> x - 1
 
 # a -> (b -> a) -> (b -> Maybe a) -- sort of
 maybe = (d) -> (f) -> (a...) ->
@@ -93,6 +102,10 @@ last = (c head) reverse
 # [String] -> String -> String
 join = (s) -> (l) -> l.join(s)
 
+# Object -> Object -> Object
+# extend = (x) -> (y) -> _.extend(x, y)
+extend = (x,y) -> _.extend(x,y)
+
 prelude =
     c:c
     head:head
@@ -100,6 +113,7 @@ prelude =
     len:len
     take_last:take_last
     gt:gt
+    lt:lt
     filter:filter
     map:map
     match:match
@@ -118,6 +132,8 @@ prelude =
     reverse:reverse
     last:last
     join:join
+    extend:extend
+    decr:decr
 
 install = (target) -> (source) -> [target[k] = v for k,v of source]
 (install exports) prelude
