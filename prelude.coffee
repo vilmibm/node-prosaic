@@ -67,7 +67,7 @@ breakf = (f) -> (l) ->
         if (eq (len r)) 0
             [l_, r]
         else if (f (head r))
-            [l_m, r]
+            [l_, r]
         else
             (help ((back l_) (head r))) (tail r)
     (help []) l
