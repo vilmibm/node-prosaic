@@ -46,8 +46,10 @@ eq = (x) -> (y) -> x == y
 # a -> a -> Bool
 ne = (x) -> (y) -> x != y
 
-# (Num a) => a -> a
+# [a] -> Bool
+empty = (l) -> (eq (len l)) 0
 
+# (Num a) => a -> a
 decr = (x) -> x - 1
 
 # a -> (b -> a) -> (b -> Maybe a) -- sort of
@@ -109,6 +111,7 @@ extend = (x,y) -> _.extend(x,y)
 prelude =
     c:c
     head:head
+    empty:empty
     tail:tail
     len:len
     take_last:take_last

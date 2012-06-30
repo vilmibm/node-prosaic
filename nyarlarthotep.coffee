@@ -45,6 +45,7 @@ fs.readFile(filename, (err, data) ->
             line_no += 1
             s = s.replace(/[\r\n]+/g, ' ')
             words = word_toker.tokenize(s)
+            return (cb null) if (empty words)
             phrase = new Phrase(
                 raw: s
                 stripped: (join ' ') words
