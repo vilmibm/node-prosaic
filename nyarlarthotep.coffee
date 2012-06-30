@@ -49,6 +49,7 @@ fs.readFile(filename, (err, data) ->
                 raw: s
                 stripped: (join ' ') words
                 source: filename
+                random: Math.random()
                 line_no: line_no
                 last_sound: (last words).phonetics()
                 num_syllables: sum ((map (maybe_num count_syllables)) words)
