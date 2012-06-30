@@ -57,20 +57,6 @@ class Rule
     clause: ->
         @.clauses[@.weakness]
 
-class RandomRule extends Rule
-    """
-    A rule to allow random selection in mongodb. This is a hack. Note that it
-    will never weaken to the trivial rule; it simply oscillates between $gte
-    and $lte. This is okay since it is inaccessible from poem templates.
-    """
-    constructor: ->
-        @.operator = ['$gte', '$lte'][randi 2]
-    weaken: -> if @.operator == '$gte' then '$lte' else '$gte'
-    clause: ->
-        query = {random:{}}
-        query.random[@.operator] = Math.random()
-        query
-
 class SyllableCountRule extends Rule
     constructor: (syllables) ->
         @.weakness = syllables
@@ -101,15 +87,12 @@ fs.readFile(template_filename, (err, data) ->
     rulesets = (map Rule.line_to_rule) lines
 
     async.map(rulesets, (ruleset, cb) ->
-        # TODO random attribute siliness
-        ruleset = ((front ruleset) (new RandomRule))
         find_line = (ruleset) -> (cb) ->
-            # problem; need to do gte RA then lte RA. how to track?
-            Phrase.findOne((Rule.collapse_ruleset ruleset), ['stripped'], (e, phrase) ->
-                if phrase
-                    cb null, phrase.stripped
-                else
+            Phrase.find((Rule.collapse_ruleset ruleset), ['stripped'], (e, phrases) ->
+                if empty phrases
                     (find_line (Rule.weaken_ruleset ruleset)) cb
+                else
+                    cb null, phrases[randi (len phrases)].stripped
             )
 
         (find_line ruleset) cb

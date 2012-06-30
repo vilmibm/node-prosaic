@@ -5,7 +5,6 @@ mg = require 'mongoose'
 PhraseSchema = new mg.Schema(
     raw: {type:String, require:true}
     source: {type:String, required:true}
-    random: {type:Number, required:true}
     stripped: String
     line_no: Number
     last_sound: String
