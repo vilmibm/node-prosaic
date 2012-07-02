@@ -30,6 +30,9 @@ map = (f) -> (l) -> l.map f
 # Regexp -> String -> Bool
 match = (r) -> (s) -> (s.match r) != null
 
+# Regexp -> String -> String -> String
+replace = (r) -> (s) -> (n) -> s.replace(r, n)
+
 # a -> null
 print = (a...) -> console.log.apply null, a
 
@@ -51,6 +54,12 @@ empty = (l) -> (eq (len l)) 0
 
 # (Num a) => a -> a
 decr = (x) -> x - 1
+
+# (Num a) => a -> a
+incr = (x) -> x + 1
+
+# (Num a) => a -> a -> a
+mod = (x) -> (y) -> x % y
 
 # a -> (b -> a) -> (b -> Maybe a) -- sort of
 maybe = (d) -> (f) -> (a...) ->
@@ -120,6 +129,7 @@ prelude =
     filter:filter
     map:map
     match:match
+    replace:replace
     print:print
     fold:fold
     sum:sum
@@ -137,6 +147,8 @@ prelude =
     join:join
     extend:extend
     decr:decr
+    incr:incr
+    mod:mod
 
 install = (target) -> (source) -> [target[k] = v for k,v of source]
 (install exports) prelude
