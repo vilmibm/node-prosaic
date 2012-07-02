@@ -6,6 +6,12 @@ c = (f) -> (g) -> (a...) -> (f g.apply(null, a))
 # [a] -> a
 head = (l) -> l[0]
 
+# [a] -> Bool
+all = (l) -> ((fold true) (x,y) -> x and y) l
+
+# (Key a) => a -> Object -> b
+get = (key) -> (obj) -> obj[key] or null
+
 # [a] -> a
 tail = (l) -> l[1..]
 
@@ -38,7 +44,7 @@ print = (a...) -> console.log.apply null, a
 
 # TODO type specific hack here
 # (a -> a -> a) -> [a] -> a
-fold = (i) -> (f) -> (l) -> if (len l) then (l.reduce f,i) else i
+fold = (i) -> (f) -> (l) -> if (len l) then (l.reduce f,i) else 0
 
 # [a] -> a
 sum = (fold 0) (x,y) -> x+y
@@ -119,6 +125,7 @@ extend = (x,y) -> _.extend(x,y)
 
 prelude =
     c:c
+    all:all
     head:head
     empty:empty
     tail:tail
@@ -149,6 +156,7 @@ prelude =
     decr:decr
     incr:incr
     mod:mod
+    get:get
 
 install = (target) -> (source) -> [target[k] = v for k,v of source]
 (install exports) prelude

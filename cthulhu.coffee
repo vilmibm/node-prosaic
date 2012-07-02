@@ -55,10 +55,14 @@ class Rule
     @parse_rhymes: (rulesets) -> (lines) -> (cb) ->
         print 'parsing'
         print rulesets
-        letters = (map (l) -> l.rhyme) lines
+        letters = (map (get 'rhyme')) lines
+        unless (all letters)
+            return cb null, rulesets
         print letters
         letter_to_sound = {}
         counter = 0
+        print "LETTERS"
+        print letters
         Phrase.find().distinct('rhyme_sound', (e, sounds) ->
             print 'got sounds'
             # side effects
