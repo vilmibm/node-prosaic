@@ -74,6 +74,43 @@ class SyllableCountRule extends Rule
         @.clauses = ((gen_clauses {}) syllables) syllables
         @.clauses[0] = Rule.trivial_clause
 
+class LastPhonemeRule extends Rule
+    constructor: (pattern, cb) ->
+        @.letters = pattern.split('')
+        @.letter_index = 0
+        @.weakness = 3
+        @.letter_to_phoneme = {}
+        Phrase.find().distinct('rhyme_sound', (e, sounds) ->
+            # side effects
+            for letter in Object.keys @.letter_to_phoneme
+                unless @.letter_to_phoneme[letter]
+                    @.letter_to_phoneme[letter] = sounds[randi (len sounds)]
+
+        )
+    clause: ->
+        sound = @.letter_to_phoneme[@.letters[@.letter_index]]
+        @.letter_index = (mod (incr @.letter_index)) (len @.letters)
+        switch @.weakness
+            when 3 then rhyme_sound:sound
+            when 2
+                rhyme_sound:
+                    if (match /0/) sound
+                        ((replace /0/) sound) '1'
+                    else if (match /1/) sound
+                        ((replace /1/) sound) '2'
+                    else if (match /2/) sound
+                        ((replace /2/) sound) '0'
+            when 1
+                rhyme_sound:
+                    if (match /0/) sound
+                        ((replace /0/) sound) '2'
+                    else if (match /1/) sound
+                        ((replace /1/) sound) '0'
+                    else if (match /2/) sound
+                        ((replace /2/) sound) '1'
+            when 0 then Rule.trivial_clause
+
+
 template_filename = process.argv[2] or process.exit(1)
 dbname = process.argv[3] or 'prosaic'
 
