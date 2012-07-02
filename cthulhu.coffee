@@ -48,6 +48,28 @@ class Rule
             ruleset = ((front ruleset) new Rule)
 
         ruleset
+
+    # [RuleSet] -> [Line] -> (Error -> [RuleSet]) -> None
+    @parse_rhymes: (rulesets) -> (lines) -> (cb) ->
+        rhyme_scheme = (map (l) -> l.rhyme) lines
+        # TODO
+        letters = rhyme_scheme.split('')
+        letter_index = 0
+        letter_to_sound = {}
+        counter = 0
+        Phrase.find().distinct('rhyme_sound', (e, sounds) ->
+            # side effects
+            for letter in Object.keys letter_to_sound
+                unless letter_to_sound[letter]
+                    letter_to_sound[letter] = sounds[randi (len sounds)]
+                rulesets[counter] = (front rulesets) new LastPhonemeRule(letter_to_sound[letter])
+                counter = (incr counter)
+            cb(null, rulesets)
+        )
+    clause: ->
+        sound = @.letter_to_phoneme[@.letters[@.letter_index]]
+        @.letter_index = (mod (incr @.letter_index)) (len @.letters)
+        ruleset
     constructor: ->
         @.weakness = 0
         @.clauses =
@@ -75,41 +97,26 @@ class SyllableCountRule extends Rule
         @.clauses[0] = Rule.trivial_clause
 
 class LastPhonemeRule extends Rule
-    constructor: (pattern, cb) ->
-        @.letters = pattern.split('')
-        @.letter_index = 0
+    constructor: (sound, cb) ->
         @.weakness = 3
-        @.letter_to_phoneme = {}
-        Phrase.find().distinct('rhyme_sound', (e, sounds) ->
-            # side effects
-            for letter in Object.keys @.letter_to_phoneme
-                unless @.letter_to_phoneme[letter]
-                    @.letter_to_phoneme[letter] = sounds[randi (len sounds)]
-
-        )
-    clause: ->
-        sound = @.letter_to_phoneme[@.letters[@.letter_index]]
-        @.letter_index = (mod (incr @.letter_index)) (len @.letters)
-        switch @.weakness
-            when 3 then rhyme_sound:sound
-            when 2
-                rhyme_sound:
-                    if (match /0/) sound
-                        ((replace /0/) sound) '1'
-                    else if (match /1/) sound
-                        ((replace /1/) sound) '2'
-                    else if (match /2/) sound
-                        ((replace /2/) sound) '0'
-            when 1
-                rhyme_sound:
-                    if (match /0/) sound
-                        ((replace /0/) sound) '2'
-                    else if (match /1/) sound
-                        ((replace /1/) sound) '0'
-                    else if (match /2/) sound
-                        ((replace /2/) sound) '1'
-            when 0 then Rule.trivial_clause
-
+        @.sound = sound
+        @.clauses:
+            3: rhyme_sound:sound
+            2: rhyme_sound:
+                if (match /0/) sound
+                    ((replace /0/) sound) '1'
+                else if (match /1/) sound
+                    ((replace /1/) sound) '2'
+                else if (match /2/) sound
+                    ((replace /2/) sound) '0'
+            1: rhyme_sound:
+                if (match /0/) sound
+                    ((replace /0/) sound) '2'
+                else if (match /1/) sound
+                    ((replace /1/) sound) '0'
+                else if (match /2/) sound
+                    ((replace /2/) sound) '1'
+            0: Rule.trivial_clause
 
 template_filename = process.argv[2] or process.exit(1)
 dbname = process.argv[3] or 'prosaic'
@@ -122,6 +129,8 @@ fs.readFile(template_filename, (err, data) ->
 
     lines = JSON.parse(data.toString()).lines
     rulesets = (map Rule.line_to_rule) lines
+    ((Rule.parse_rhymes rulesets) lines) (e, rulesets) -> rulesets = rulesets
+
 
     async.map(rulesets, (ruleset, cb) ->
         find_line = (ruleset) -> (cb) ->
