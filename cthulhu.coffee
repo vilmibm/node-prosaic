@@ -34,7 +34,9 @@ class Rule
         Given a ruleset, weaken a random rule in the set and return the
         ruleset.
         """
-        ((filter (r) -> ((gt r.weakness) 0)) ruleset)[randi (decr (len ruleset))]?.weaken()
+        index = randi (len ruleset)
+        print "WEAKENING #{index}"
+        ((filter (r) -> ((gt r.weakness) 0)) ruleset)[index]?.weaken()
 
         ruleset
 
@@ -51,18 +53,21 @@ class Rule
 
     # [RuleSet] -> [Line] -> (Error -> [RuleSet]) -> None
     @parse_rhymes: (rulesets) -> (lines) -> (cb) ->
-        rhyme_scheme = (map (l) -> l.rhyme) lines
-        # TODO
-        letters = rhyme_scheme.split('')
-        letter_index = 0
+        print 'parsing'
+        print rulesets
+        letters = (map (l) -> l.rhyme) lines
+        print letters
         letter_to_sound = {}
         counter = 0
         Phrase.find().distinct('rhyme_sound', (e, sounds) ->
+            print 'got sounds'
             # side effects
-            for letter in Object.keys letter_to_sound
+            for letter in letters
+                print letter
                 unless letter_to_sound[letter]
                     letter_to_sound[letter] = sounds[randi (len sounds)]
-                rulesets[counter] = (front rulesets) new LastPhonemeRule(letter_to_sound[letter])
+                print letter_to_sound
+                rulesets[counter] = (front rulesets[counter]) new LastPhonemeRule(letter_to_sound[letter])
                 counter = (incr counter)
             cb(null, rulesets)
         )
@@ -100,7 +105,7 @@ class LastPhonemeRule extends Rule
     constructor: (sound, cb) ->
         @.weakness = 3
         @.sound = sound
-        @.clauses:
+        @.clauses =
             3: rhyme_sound:sound
             2: rhyme_sound:
                 if (match /0/) sound
@@ -129,22 +134,24 @@ fs.readFile(template_filename, (err, data) ->
 
     lines = JSON.parse(data.toString()).lines
     rulesets = (map Rule.line_to_rule) lines
-    ((Rule.parse_rhymes rulesets) lines) (e, rulesets) -> rulesets = rulesets
+    ((Rule.parse_rhymes rulesets) lines) (e, rs) ->
+        print rs
+        rulesets = rs
+        async.map(rulesets, (ruleset, cb) ->
+            find_line = (ruleset) -> (cb) ->
+                query = Rule.collapse_ruleset ruleset
+                print query
+                Phrase.find(query, ['stripped'], (e, phrases) ->
+                    if empty phrases
+                        (find_line (Rule.weaken_ruleset ruleset)) cb
+                    else
+                        cb null, phrases[randi (len phrases)].stripped
+                )
 
-
-    async.map(rulesets, (ruleset, cb) ->
-        find_line = (ruleset) -> (cb) ->
-            Phrase.find((Rule.collapse_ruleset ruleset), ['stripped'], (e, phrases) ->
-                if empty phrases
-                    (find_line (Rule.weaken_ruleset ruleset)) cb
-                else
-                    cb null, phrases[randi (len phrases)].stripped
-            )
-
-        (find_line ruleset) cb
-    , (e, poem) ->
-        (console.error e) if e
-        print poem
-        process.exit()
-    )
+            (find_line ruleset) cb
+        , (e, poem) ->
+            (console.error e) if e
+            print poem
+            process.exit()
+        )
 )
