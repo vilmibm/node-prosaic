@@ -35,7 +35,6 @@ class Rule
         ruleset.
         """
         index = randi (len ruleset)
-        print "WEAKENING #{index}"
         ((filter (r) -> ((gt r.weakness) 0)) ruleset)[index]?.weaken()
 
         ruleset
@@ -53,24 +52,16 @@ class Rule
 
     # [RuleSet] -> [Line] -> (Error -> [RuleSet]) -> None
     @parse_rhymes: (rulesets) -> (lines) -> (cb) ->
-        print 'parsing'
-        print rulesets
         letters = (map (get 'rhyme')) lines
         unless (all letters)
             return cb null, rulesets
-        print letters
         letter_to_sound = {}
         counter = 0
-        print "LETTERS"
-        print letters
         Phrase.find().distinct('rhyme_sound', (e, sounds) ->
-            print 'got sounds'
             # side effects
             for letter in letters
-                print letter
                 unless letter_to_sound[letter]
                     letter_to_sound[letter] = sounds[randi (len sounds)]
-                print letter_to_sound
                 rulesets[counter] = (front rulesets[counter]) new LastPhonemeRule(letter_to_sound[letter])
                 counter = (incr counter)
             cb(null, rulesets)
@@ -139,7 +130,6 @@ fs.readFile(template_filename, (err, data) ->
     lines = JSON.parse(data.toString()).lines
     rulesets = (map Rule.line_to_rule) lines
     ((Rule.parse_rhymes rulesets) lines) (e, rs) ->
-        print rs
         rulesets = rs
         async.map(rulesets, (ruleset, cb) ->
             find_line = (ruleset) -> (cb) ->
