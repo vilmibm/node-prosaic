@@ -5,10 +5,11 @@
         /|
         \|
 
-## prosaic is a poetry generator based on the weltanschauung algorithm
+## prosaic is a poetry generator
 
 ### summary
 
+ * based on the [weltanschauung](https://github.com/nathanielksmith/weltanschauung) algorithm
  * directed cut-up over large corpora
  * two halves:
   * _nyarlarthotep_, reads, parses, tags text and stores in mongodb
