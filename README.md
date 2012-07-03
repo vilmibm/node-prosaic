@@ -5,11 +5,12 @@
         /|
         \|
 
-## prosaic is a poetry generator based on the weltanschauung algorithm
+## prosaic is a poetry generator
 
 ### summary
 
- * directed cut-up over large corpora
+ * based on the [weltanschauung](https://github.com/nathanielksmith/weltanschauung) algorithm
+ * directed cut-up poetry over large corpora
  * two halves:
   * _nyarlarthotep_, reads, parses, tags text and stores in mongodb
   * _cthulhu_, given a poem template in JSON generate a cut-up piece
