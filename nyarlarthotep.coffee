@@ -54,6 +54,7 @@ fs.readFile(filename, (err, data) ->
                 last_sound: (last words).phonetics()
                 num_syllables: sum ((map (maybe_num count_syllables)) words)
                 rhyme_sound: ((join ' ') ((take_last 3) ((maybe_list phonemes) (last words))))
+                tokens:words
             )
             phrase.save(cb)
         , (err) ->

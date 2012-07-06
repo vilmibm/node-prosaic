@@ -10,5 +10,6 @@ PhraseSchema = new mg.Schema(
     last_sound: String
     rhyme_sound: String
     num_syllables: Number
+    tokens: [String]
 )
 exports.Phrase = mg.model('Phrase', PhraseSchema)
