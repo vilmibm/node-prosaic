@@ -123,9 +123,16 @@ join = (s) -> (l) -> l.join(s)
 # extend = (x) -> (y) -> _.extend(x, y)
 extend = (x,y) -> _.extend(x,y)
 
+# Number -> Number
+randi = (max) -> Math.floor (Math.random() * max)
+
+# Boolean -> (_ -> _) -> (_ -> _)
+cond = (b) -> (t) -> (f) -> if b then t() else f()
+
 prelude =
     c:c
     all:all
+    cond:cond
     head:head
     empty:empty
     tail:tail
@@ -157,6 +164,7 @@ prelude =
     incr:incr
     mod:mod
     get:get
+    randi:randi
 
 install = (target) -> (source) -> [target[k] = v for k,v of source]
 (install exports) prelude
