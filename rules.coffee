@@ -1,5 +1,6 @@
 natural = require 'natural'
 
+{Phrase} = require './idols'
 (require './prelude').install()
 
 # type RuleSet = [Rule]
@@ -44,22 +45,6 @@ class Rule
 
         ruleset
 
-    # [RuleSet] -> [Line] -> (Error -> [RuleSet]) -> None
-    @parse_rhymes: (rulesets) -> (lines) -> (cb) ->
-        letters = (map (get 'rhyme')) lines
-        unless (all letters)
-            return cb null, rulesets
-        letter_to_sound = {}
-        counter = 0
-        Phrase.find().distinct('rhyme_sound', (e, sounds) ->
-            # side effects
-            for letter in letters
-                unless letter_to_sound[letter]
-                    letter_to_sound[letter] = sounds[randi (len sounds)]
-                rulesets[counter] = (front rulesets[counter]) new LastPhonemeRule(letter_to_sound[letter])
-                counter = (incr counter)
-            cb(null, rulesets)
-        )
     clause: ->
         sound = @.letter_to_phoneme[@.letters[@.letter_index]]
         @.letter_index = (mod (incr @.letter_index)) (len @.letters)
@@ -75,40 +60,53 @@ class Rule
 
 
 class KeywordRule extends Rule
+    @parse_keywords: (rulesets, lines, cb) ->
+        async.map(rulesets, (ruleset, outer_cb) ->
+            async.map(ruleset, (rule, inner_cb) ->
+                if rule not instanceof KeywordRule
+                    return inner_cb null, rule
+                Phrase.find(terms:rule.keyword, (e, phrases) ->
+                    rule.cache = phrases
+                    inner_cb null, rule
+                )
+            , (e, ruleset) -> outer_cb null, ruleset)
+        , (e, rulesets) -> cb null, rulesets, lines)
     constructor: (keyword) ->
         @.keyword = keyword
         @.weakness = 11
         @.clauses =
             11: stems:keyword
             0: Rule.trivial_clause
-    clause: -> 
-        #if @.weakness in [0, 11]
-        if @.weakness in [0]
-            super
-        else
-            $where:"""
-            var query = {stems:'#{@.keyword}'};
+    clause: ->
+        throw "cache is undefined or null" unless @.cache?
+        return Rule.trivial_clause if empty @.cache
+        return super() if @.weakness in [0,11]
 
-            var matches = db.phrases.find(query).count()
-            if (matches === 0)
-                return false;
+        phrase = @.cache[randi (len phrases)]
 
-            var phrases = db.phrases.find(query);
-            return true;
-            var phrase = phrases[Math.floor(Math.random()*matches)];
-
-            if (phrase.source !== this.source)
-                return false;
-
-            var distance = Math.abs(phrase.line_no - this.line_no);
-
-            if (distance > #{@.weakness})
-                return false;
-
-            return true;"""
+        return {
+            source:phrase.source
+            $where:"Math.abs(#{phrase.line_no} - this.line_no) <= #{@.weakness}"
+        }
 
 
 class LastPhonemeRule extends Rule
+    # [RuleSet] -> [Line] -> (Error -> [RuleSet]) -> None
+    @parse_rhymes: (rulesets, lines, cb) ->
+        letters = (map (get 'rhyme')) lines
+        unless (all letters)
+            return cb null, rulesets, lines
+        letter_to_sound = {}
+        counter = 0
+        Phrase.find().distinct('rhyme_sound', (e, sounds) ->
+            # side effects
+            for letter in letters
+                unless letter_to_sound[letter]
+                    letter_to_sound[letter] = sounds[randi (len sounds)]
+                rulesets[counter] = (front rulesets[counter]) new LastPhonemeRule(letter_to_sound[letter])
+                counter = (incr counter)
+            cb null, rulesets, lines
+        )
     constructor: (sound, cb) ->
         @.weakness = 3
         @.sound = sound

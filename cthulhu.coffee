@@ -19,7 +19,7 @@ LastPhonemeRule} = require './rules'
 template_filename = process.argv[2] or process.exit(1)
 dbname = process.argv[3] or 'prosaic'
 
-mg.connect("mongodb://localhost/#{dbname}")
+mg.connect "mongodb://localhost/#{dbname}"
 
 fs.readFile(template_filename, (err, data) ->
     (print err) if err
@@ -27,8 +27,15 @@ fs.readFile(template_filename, (err, data) ->
 
     lines = JSON.parse(data.toString()).lines
     rulesets = (map Rule.line_to_rule) lines
-    ((Rule.parse_rhymes rulesets) lines) (e, rs) ->
-        rulesets = rs
+    async.waterfall([
+        (cb) -> cb rulesets, lines,
+        KeywordRule.parse_keywords,
+        LastPhonemeRule.parse_rhymes,
+    ], (e, rulesets, lines) ->
+        if e
+            console.error e
+            process.exit(2)
+
         async.map(rulesets, (ruleset, cb) ->
             find_line = (ruleset) -> (cb) ->
                 query = Rule.collapse_ruleset ruleset
@@ -46,4 +53,5 @@ fs.readFile(template_filename, (err, data) ->
             print poem
             process.exit()
         )
+    )
 )
