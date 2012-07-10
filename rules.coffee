@@ -1,3 +1,4 @@
+async = require 'async'
 natural = require 'natural'
 
 {Phrase} = require './idols'
@@ -65,7 +66,7 @@ class KeywordRule extends Rule
             async.map(ruleset, (rule, inner_cb) ->
                 if rule not instanceof KeywordRule
                     return inner_cb null, rule
-                Phrase.find(terms:rule.keyword, (e, phrases) ->
+                Phrase.find(stems:rule.keyword, (e, phrases) ->
                     rule.cache = phrases
                     inner_cb null, rule
                 )
@@ -74,19 +75,17 @@ class KeywordRule extends Rule
     constructor: (keyword) ->
         @.keyword = keyword
         @.weakness = 11
-        @.clauses =
-            11: stems:keyword
-            0: Rule.trivial_clause
     clause: ->
         throw "cache is undefined or null" unless @.cache?
-        return Rule.trivial_clause if empty @.cache
-        return super() if @.weakness in [0,11]
+        return Rule.trivial_clause if (empty @.cache) or @.weakness == 0
+        return {stems:@.keyword} if @.weakness == 11
 
-        phrase = @.cache[randi (len phrases)]
+        phrase = @.cache[randi (len @.cache)]
+        acceptable_distance = 11 - weakness
 
         return {
             source:phrase.source
-            $where:"Math.abs(#{phrase.line_no} - this.line_no) <= #{@.weakness}"
+            $where:"Math.abs(#{phrase.line_no} - this.line_no) <= #{@.acceptable_distance}"
         }
 
 

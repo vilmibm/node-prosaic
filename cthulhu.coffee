@@ -28,7 +28,7 @@ fs.readFile(template_filename, (err, data) ->
     lines = JSON.parse(data.toString()).lines
     rulesets = (map Rule.line_to_rule) lines
     async.waterfall([
-        (cb) -> cb rulesets, lines,
+        (cb) -> cb null, rulesets, lines,
         KeywordRule.parse_keywords,
         LastPhonemeRule.parse_rhymes,
     ], (e, rulesets, lines) ->
