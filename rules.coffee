@@ -41,6 +41,9 @@ class Rule
         if 'keyword' of line
             ruleset = ((front ruleset) new KeywordRule(natural.PorterStemmer.stem line.keyword))
 
+        if 'fuzzy' of line
+            ruleset = ((front ruleset) new FuzzyKeywordRule(natural.PorterStemmer.stem line.fuzzy))
+
         if (eq (len ruleset)) 0
             ruleset = ((front ruleset) new Rule)
 
@@ -72,21 +75,29 @@ class KeywordRule extends Rule
                 )
             , (e, ruleset) -> outer_cb null, ruleset)
         , (e, rulesets) -> cb null, rulesets, lines)
-    constructor: (keyword) ->
-        @.keyword = keyword
-        @.weakness = 11
+    constructor: (@keyword) -> @.weakness = 11
     clause: ->
         throw "cache is undefined or null" unless @.cache?
         return Rule.trivial_clause if (empty @.cache) or @.weakness == 0
         return {stems:@.keyword} if @.weakness == 11
 
         phrase = @.cache[randi (len @.cache)]
-        acceptable_distance = 11 - weakness
+        acceptable_distance = 11 - @.weakness
+
+        @.last_phrase = phrase
 
         return {
             source:phrase.source
-            $where:"Math.abs(#{phrase.line_no} - this.line_no) <= #{@.acceptable_distance}"
+            $where:"Math.abs(#{phrase.line_no} - this.line_no) <= #{acceptable_distance}"
         }
+
+
+class FuzzyKeywordRule extends KeywordRule
+    constructor: (@keyword) -> @.weakness = 10
+    clause: ->
+        query = super()
+        query.line_no = $ne: @.last_phrase.line_no
+        return query
 
 
 class LastPhonemeRule extends Rule
