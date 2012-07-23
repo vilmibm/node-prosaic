@@ -12,7 +12,7 @@
  * based on the [weltanschauung](https://github.com/nathanielksmith/weltanschauung) algorithm
  * directed cut-up poetry over large corpora
  * two halves:
-  * _nyarlarthotep_, reads, parses, tags text and stores in mongodb
+  * _nyarlathotep_, reads, parses, tags text and stores in mongodb
   * _cthulhu_, given a poem template in JSON generate a cut-up piece
 
 ### usage
