@@ -29,6 +29,10 @@
  * largely intended for human collaborators; goal is for it to produce great works on its own
  * we waste millions of minutes filling the internet with junk text that will be lost forever. the tools of cutup/juxtaposition uncover works of beauty that we'd otherwise never see
 
+### examples
+
+i have published a few sonnets on [gnoetry daily](http://gnoetrydaily.wordpress.com/category/prosaic/).
+
 ### disclaimer
 
  * hacky art project
