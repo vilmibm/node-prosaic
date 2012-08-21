@@ -40,17 +40,20 @@ fs.readFile(template_filename, (err, data) ->
             find_line = (ruleset) -> (cb) ->
                 query = Rule.collapse_ruleset ruleset
                 print query
-                Phrase.find(query, ['stripped'], (e, phrases) ->
+                Phrase.find(query, ['stripped', 'source'], (e, phrases) ->
                     if empty phrases
                         (find_line (Rule.weaken_ruleset ruleset)) cb
                     else
-                        cb null, phrases[randi (len phrases)].stripped
+                        cb null, phrases[randi (len phrases)]
                 )
 
             (find_line ruleset) cb
         , (e, poem) ->
             (console.error e) if e
-            print poem
+            sources = (map (x) -> x.source) poem
+            lines = (map (x) -> x.stripped) poem
+            print sources
+            print lines
             process.exit()
         )
     )
