@@ -26,7 +26,7 @@
 ### but... why?
 
  * william burroughs had some good ideas
- * largely intended for human collaborators; goal is for it to produce great works on its own
+ * largely intended for human collaboration; the poems it puts out can be thought of as a starting point for further work. some corpora, however, cause beautiful works to be produced with little/no human intervention.
  * we waste millions of minutes filling the internet with junk text that will be lost forever. the tools of cutup/juxtaposition uncover works of beauty that we'd otherwise never see
 
 ### examples
