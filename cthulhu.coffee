@@ -40,7 +40,7 @@ fs.readFile(template_filename, (err, data) ->
             find_line = (ruleset) -> (cb) ->
                 query = Rule.collapse_ruleset ruleset
                 print query
-                Phrase.find(query, ['stripped', 'source'], (e, phrases) ->
+                Phrase.find(query, 'stripped source', (e, phrases) ->
                     if empty phrases
                         (find_line (Rule.weaken_ruleset ruleset)) cb
                     else
