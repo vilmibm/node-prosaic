@@ -1,0 +1,24 @@
+{
+    "name": "prosaic",
+    "preferGlobal": true,
+    "version": "1.0.0",
+    "author": "nathaniel k smith <nathanielksmith@gmail.com>",
+    "description": "cut-up poetry generator for large corpora",
+    "scripts": {
+        "cthulhu": "./cthulhu.coffee",
+        "nyarlathotep": "./nyarlathotep.coffee"
+    },
+    "repository": {
+        "type":"git",
+        "url": "https://github.com/nathanielksmith/prosaic"
+    },
+    "dependencies": {
+        "coffee-script": "*",
+        "async": "*",
+        "mongoose": "*",
+        "natural": "*",
+        "cmudict": "*",
+        "underscore": "*"
+    },
+    "license":"GPLv3"
+}
