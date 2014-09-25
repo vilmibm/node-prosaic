@@ -7,6 +7,8 @@
 
 ## prosaic is a poetry generator
 
+# this is the old prosaic. There's a new version with actual documentation at: [https://github.com/nathanielksmith/prosaic](https://github.com/nathanielksmith/prosaic)
+
 ### summary
 
  * based on the [weltanschauung](https://github.com/nathanielksmith/weltanschauung) algorithm
